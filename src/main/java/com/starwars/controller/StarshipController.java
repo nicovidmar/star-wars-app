@@ -47,49 +47,52 @@ public class StarshipController {
 
     @Operation(summary = "Listar naves", description = "Obtiene una lista paginada de naves")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Naves encontradas"),
-        @ApiResponse(responseCode = "500", description = "Error del servidor", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "200", description = "Naves encontradas"),
+            @ApiResponse(responseCode = "400", description = "Sin resultados para página", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Error del servidor", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping
     public Mono<List<AllStarshipsResponse.StarshipSummary>> getStarships(
-            @Parameter(description = "Número de página a solicitar", example = "1")
-            @RequestParam(defaultValue = "1") int page) {
+            @Parameter(description = "Número de página a solicitar", example = "1") @RequestParam(defaultValue = "1") int page) {
         LOGGER.info(Constants.STARSHIP_LOG_FETCH, page);
         return starWarsService.getStarships(page)
                 .onErrorResume(e -> {
                     LOGGER.error(Constants.STARSHIP_FETCH_ERROR, e);
-                    return Mono.error(new CustomizableException(Constants.STARSHIP_FETCH_ERROR, HttpStatus.INTERNAL_SERVER_ERROR));
+                    if (e instanceof CustomizableException) {
+                        return Mono.error(e);
+                    }
+                    return Mono.error(new CustomizableException(Constants.STARSHIP_FETCH_ERROR,
+                            HttpStatus.INTERNAL_SERVER_ERROR));
                 });
     }
 
     @Operation(summary = "Buscar naves por nombre", description = "Obtiene una lista de naves cuyo nombre contiene el string proporcionado")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Naves encontradas"),
-        @ApiResponse(responseCode = "404", description = "Naves no encontradas", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "500", description = "Error del servidor", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "200", description = "Naves encontradas"),
+            @ApiResponse(responseCode = "404", description = "Naves no encontradas", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Error del servidor", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/search")
     public Mono<List<Starship>> getStarshipsByName(
-            @Parameter(description = "Nombre o parte del nombre de la nave", example = "Star")
-            @RequestParam String name) {
+            @Parameter(description = "Nombre o parte del nombre de la nave", example = "Star") @RequestParam String name) {
         LOGGER.info(Constants.STARSHIP_LOG_FETCH_BY_NAME, name);
         return starWarsService.getStarshipsByName(name)
                 .onErrorResume(e -> {
                     LOGGER.error(Constants.STARSHIP_FETCH_ERROR_BY_NAME, e);
-                    return Mono.error(new CustomizableException(Constants.STARSHIP_FETCH_ERROR_BY_NAME, HttpStatus.NOT_FOUND));
+                    return Mono.error(
+                            new CustomizableException(Constants.STARSHIP_FETCH_ERROR_BY_NAME, HttpStatus.NOT_FOUND));
                 });
     }
 
     @Operation(summary = "Buscar nave por ID", description = "Obtiene una nave específica según su ID")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Nave encontrada"),
-        @ApiResponse(responseCode = "404", description = "Nave no encontrada", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "500", description = "Error del servidor", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "200", description = "Nave encontrada"),
+            @ApiResponse(responseCode = "404", description = "Nave no encontrada", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Error del servidor", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{id}")
     public Mono<Starship> getStarshipById(
-            @Parameter(description = "ID de la nave a obtener", example = "2")
-            @PathVariable String id) {
+            @Parameter(description = "ID de la nave a obtener", example = "2") @PathVariable String id) {
         LOGGER.info(Constants.STARSHIP_LOG_FETCH_BY_ID, id);
         return starWarsService.getStarshipById(id)
                 .onErrorResume(e -> {
@@ -99,7 +102,7 @@ public class StarshipController {
     }
 
     @ExceptionHandler(CustomizableException.class)
-    public ResponseEntity<String> handleCustomizableException(CustomizableException ex) {
-        return new ResponseEntity<>(ex.getMessage(), ex.getStatus());
+    public ResponseEntity<ErrorResponse> handleCustomizableException(CustomizableException ex) {
+        return new ResponseEntity<>(ex.toErrorResponse(), ex.getStatus());
     }
 }

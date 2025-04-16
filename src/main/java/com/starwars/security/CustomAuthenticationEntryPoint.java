@@ -31,9 +31,12 @@ public class CustomAuthenticationEntryPoint implements ServerAuthenticationEntry
         response.setStatusCode(HttpStatus.UNAUTHORIZED);
         response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
-        String body = String.format("{\"message\":\"%s\"}", Constants.UNAUTHORIZED_ACCESS_MESSAGE);
-        DataBuffer buffer = response.bufferFactory().wrap(body.getBytes(StandardCharsets.UTF_8));
+        String body = String.format("{\"message\":\"%s\", \"status\": %d}",
+                Constants.UNAUTHORIZED_ACCESS_MESSAGE,
+                HttpStatus.UNAUTHORIZED.value());
 
+        DataBuffer buffer = response.bufferFactory().wrap(body.getBytes(StandardCharsets.UTF_8));
         return response.writeWith(Mono.just(buffer));
     }
+
 }

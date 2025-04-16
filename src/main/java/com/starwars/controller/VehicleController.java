@@ -48,17 +48,21 @@ public class VehicleController {
     @Operation(summary = "Listar vehículos", description = "Obtiene una lista paginada de vehículos")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Vehículos encontrados"),
+            @ApiResponse(responseCode = "400", description = "Sin resultados para página", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "500", description = "Error del servidor", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping
     public Mono<List<AllVehiclesResponse.VehicleSummary>> getVehicles(
-            @Parameter(description = "Número de página a solicitar", example = "1")
-            @RequestParam(defaultValue = "1") int page) {
+            @Parameter(description = "Número de página a solicitar", example = "1") @RequestParam(defaultValue = "1") int page) {
         LOGGER.info(Constants.VEHICLE_LOG_FETCH, page);
         return starWarsService.getVehicles(page)
                 .onErrorResume(e -> {
                     LOGGER.error(Constants.VEHICLE_FETCH_ERROR, e);
-                    return Mono.error(new CustomizableException(Constants.VEHICLE_FETCH_ERROR, HttpStatus.INTERNAL_SERVER_ERROR));
+                    if (e instanceof CustomizableException) {
+                        return Mono.error(e);
+                    }
+                    return Mono.error(new CustomizableException(Constants.VEHICLE_FETCH_ERROR,
+                            HttpStatus.INTERNAL_SERVER_ERROR));
                 });
     }
 
@@ -70,13 +74,13 @@ public class VehicleController {
     })
     @GetMapping("/search")
     public Mono<List<Vehicle>> getVehiclesByName(
-            @Parameter(description = "Nombre o parte del nombre del vehículo", example = "Sand")
-            @RequestParam String name) {
+            @Parameter(description = "Nombre o parte del nombre del vehículo", example = "Sand") @RequestParam String name) {
         LOGGER.info(Constants.VEHICLE_LOG_FETCH_BY_NAME, name);
         return starWarsService.getVehiclesByName(name)
                 .onErrorResume(e -> {
                     LOGGER.error(Constants.VEHICLE_FETCH_ERROR_BY_NAME, e);
-                    return Mono.error(new CustomizableException(Constants.VEHICLE_FETCH_ERROR_BY_NAME, HttpStatus.NOT_FOUND));
+                    return Mono.error(
+                            new CustomizableException(Constants.VEHICLE_FETCH_ERROR_BY_NAME, HttpStatus.NOT_FOUND));
                 });
     }
 
@@ -88,8 +92,7 @@ public class VehicleController {
     })
     @GetMapping("/{id}")
     public Mono<Vehicle> getVehicleById(
-            @Parameter(description = "ID del vehículo a obtener", example = "4")
-            @PathVariable String id) {
+            @Parameter(description = "ID del vehículo a obtener", example = "4") @PathVariable String id) {
         LOGGER.info(Constants.VEHICLE_LOG_FETCH_BY_ID, id);
         return starWarsService.getVehicleById(id)
                 .onErrorResume(e -> {
@@ -99,7 +102,7 @@ public class VehicleController {
     }
 
     @ExceptionHandler(CustomizableException.class)
-    public ResponseEntity<String> handleCustomizableException(CustomizableException ex) {
-        return new ResponseEntity<>(ex.getMessage(), ex.getStatus());
+    public ResponseEntity<ErrorResponse> handleCustomizableException(CustomizableException ex) {
+        return new ResponseEntity<>(ex.toErrorResponse(), ex.getStatus());
     }
 }

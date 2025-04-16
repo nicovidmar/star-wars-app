@@ -52,7 +52,15 @@ public class StarWarsApiService {
                                                 .build())
                                 .retrieve()
                                 .bodyToMono(AllPeopleResponse.class)
-                                .map(AllPeopleResponse::getResults);
+                                .flatMap(response -> {
+                                        if (page < 1 || page > response.getTotalPages()) {
+                                            return Mono.error(new CustomizableException(
+                                                    Constants.NO_RESULT_FOR_PAGE,
+                                                    HttpStatus.BAD_REQUEST));
+                                        }
+                        
+                                        return Mono.just(response.getResults());
+                                    });
         }
 
         public Mono<Person> getPersonById(String id) {
@@ -147,7 +155,15 @@ public class StarWarsApiService {
                                                 .build())
                                 .retrieve()
                                 .bodyToMono(AllVehiclesResponse.class)
-                                .map(AllVehiclesResponse::getResults);
+                                .flatMap(response -> {
+                                        if (page < 1 || page > response.getTotalPages()) {
+                                            return Mono.error(new CustomizableException(
+                                                    Constants.NO_RESULT_FOR_PAGE,
+                                                    HttpStatus.BAD_REQUEST));
+                                        }
+                        
+                                        return Mono.just(response.getResults());
+                                    });
         }
 
         public Mono<List<Vehicle>> getVehiclesByName(String name) {
@@ -183,14 +199,23 @@ public class StarWarsApiService {
 
         public Mono<List<StarshipSummary>> getStarships(int page) {
                 return webClient.get()
-                                .uri(uriBuilder -> uriBuilder.path(Constants.STARSHIPS_ENDPOINT)
-                                                .queryParam(Constants.PAGE_QUERY_PARAM, page)
-                                                .queryParam(Constants.LIMIT_QUERY_PARAM, Constants.LIMIT_VAL_TEN)
-                                                .build())
-                                .retrieve()
-                                .bodyToMono(AllStarshipsResponse.class)
-                                .map(AllStarshipsResponse::getResults);
-        }
+                        .uri(uriBuilder -> uriBuilder.path(Constants.STARSHIPS_ENDPOINT)
+                                .queryParam(Constants.PAGE_QUERY_PARAM, page)
+                                .queryParam(Constants.LIMIT_QUERY_PARAM, Constants.LIMIT_VAL_TEN)
+                                .build())
+                        .retrieve()
+                        .bodyToMono(AllStarshipsResponse.class)
+                        .flatMap(response -> {
+                            if (page < 1 || page > response.getTotalPages()) {
+                                return Mono.error(new CustomizableException(
+                                        Constants.NO_RESULT_FOR_PAGE,
+                                        HttpStatus.BAD_REQUEST));
+                            }
+            
+                            return Mono.just(response.getResults());
+                        });
+            }
+            
 
         public Mono<Starship> getStarshipById(String id) {
                 return webClient.get()

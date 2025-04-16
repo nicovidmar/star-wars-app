@@ -96,7 +96,7 @@ public class FilmController {
     }
 
     @ExceptionHandler(CustomizableException.class)
-    public ResponseEntity<String> handleCustomizableException(CustomizableException ex) {
-        return new ResponseEntity<>(ex.getMessage(), ex.getStatus());
+    public ResponseEntity<ErrorResponse> handleCustomizableException(CustomizableException ex) {
+        return new ResponseEntity<>(ex.toErrorResponse(), ex.getStatus());
     }
 }

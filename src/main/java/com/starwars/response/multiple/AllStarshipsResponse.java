@@ -2,10 +2,23 @@ package com.starwars.response.multiple;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class AllStarshipsResponse {
     private List<StarshipSummary> results;
     private String next;
     private String previous;
+    
+    @JsonProperty("total_pages")
+    private int totalPages;
+
+    public int getTotalPages() {
+        return totalPages;
+    }
+
+    public void setTotalPages(int totalPages) {
+        this.totalPages = totalPages;
+    }
 
     public List<StarshipSummary> getResults() {
         return results;

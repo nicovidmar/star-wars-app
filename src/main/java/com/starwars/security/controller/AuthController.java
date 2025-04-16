@@ -1,7 +1,10 @@
 package com.starwars.security.controller;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -54,7 +57,12 @@ public class AuthController {
                 })
                 .onErrorResume(e -> {
                     LOGGER.error(Constants.LOGIN_FAILURE, username);
-                    return Mono.error(new CustomizableException(Constants.INVALID_CREDENTIALS));
+                    return Mono.error(new CustomizableException(Constants.INVALID_CREDENTIALS, HttpStatus.UNAUTHORIZED));
                 });
+    }
+    
+    @ExceptionHandler(CustomizableException.class)
+    public ResponseEntity<ErrorResponse> handleCustomizableException(CustomizableException ex) {
+        return new ResponseEntity<>(ex.toErrorResponse(), ex.getStatus());
     }
 }

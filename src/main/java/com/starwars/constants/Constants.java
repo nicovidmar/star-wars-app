@@ -20,6 +20,8 @@ public final class Constants {
     public static final int LIMIT_VAL_TEN = 10;
     public static final String TITLE_QUERY_PARAM = "title";
 
+    public static final String NO_RESULT_FOR_PAGE = "No results for this page";
+
     public static final String PEOPLE_FETCH_ERROR = "Error fetching people";
     public static final String PEOPLE_FETCH_ERROR_BY_NAME = "Error fetching person by name";
     public static final String PERSON_NOT_FOUND = "Person not found";
