@@ -10,3 +10,5 @@ O bien a través de Swagger junto con la documentación
 
 # Documentación
 https://star-wars-app-lbzz.onrender.com/webjars/swagger-ui/index.html
+
+Vale aclarar que Render puede demorar uno o dos minutos en levantar luego de la primera consulta (queda en modo "sleep" después de 15 minutos de inactividad)
